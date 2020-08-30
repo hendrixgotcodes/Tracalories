@@ -66,6 +66,9 @@ const UICtrl = (function (itemCtrl) {
   const UISelectors = {
     itemList: "item-list",
     btn_add: "btn-add",
+    btn_update: "btn-update",
+    btn_delete: "btn-delete",
+    btn_back: "btn-back",
     input_ItemName: "item-name",
     input_ItemCalories: "item-calories",
     span_TotalCalories: "total-calories",
@@ -100,6 +103,7 @@ const UICtrl = (function (itemCtrl) {
     }
   }
 
+  //Function to how food items in UI
   let populateItemList = function (items) {
     let innerHtml = "";
     let totalCalories = itemCtrl.getTotalCalories();
@@ -119,14 +123,22 @@ const UICtrl = (function (itemCtrl) {
 
   };
 
+  //Function to remove update, delete and back btns
+  function rmBtns(){
+    document.getElementById(UISelectors.btn_update).style.display= "none";
+    document.getElementById(UISelectors.btn_delete).style.display= "none"
+    document.getElementById(UISelectors.btn_back).style.display= "none"
+  }
+
   return {
     populateItemList: populateItemList,
+    rmvBtns: rmBtns,
 
     //Returning Selectors
     // UISelectors: ()=> UISelectors,
 
     //Calling Event listeners
-    appendEventListeners: () => loadEventListeners(),
+    appendEventListeners: () => loadEventListeners()
   };
 })(ItemCtrl);
 
@@ -140,6 +152,8 @@ const App = (function (itemCtrl, uiCtrl) {
       const items = itemCtrl.getItems();
 
       uiCtrl.populateItemList(items);
+
+      uiCtrl.rmvBtns();
     },
   };
 })(ItemCtrl, UICtrl);
