@@ -23,8 +23,8 @@ const ItemCtrl = (function () {
     getItems: function () {
       return state.items;
     },
-    getTotalCalories: function(){
-        return state.totalCalories;
+    getTotalCalories: function () {
+      return state.totalCalories;
     },
     //function to add food items to list
     addItems: function (name, calories) {
@@ -43,26 +43,61 @@ const ItemCtrl = (function () {
         calories: parseInt(calories),
       };
 
+      state.currentItem = newFoodItem;
+
       //Adding new food item to food items
       state.items.push(newFoodItem);
 
       let totalCalories = 0;
-      state.items.forEach((food)=>{
-            totalCalories += food.calories;
+      state.items.forEach(food => {
+        totalCalories += food.calories;
       });
       state.totalCalories = totalCalories;
-
 
       return state.items;
     },
     logData: function () {
       return state;
     },
+    getCurrentItem: function () {
+      return state.currentItem;
+    },
+  };
+})();
+
+//Data Controller
+const DATActrl = (function () {
+  function grepItem() {
+    return JSON.parse(localStorage.getItem("items"));
+  }
+
+  return {
+    // Returning public functions
+
+    setItem: function (item) {
+      let fromLocalStorage = grepItem();
+
+      if (fromLocalStorage !== null) {
+        fromLocalStorage.push(item);
+        fromLocalStorage = JSON.stringify(fromLocalStorage);
+
+        localStorage.setItem("items", fromLocalStorage);
+      } else if (fromLocalStorage === null) {
+        fromLocalStorage = [];
+        fromLocalStorage.push(item);
+
+        fromLocalStorage = JSON.stringify(fromLocalStorage);
+
+        localStorage.setItem("items", fromLocalStorage);
+      }
+    },
+
+    getItem: () => grepItem(),
   };
 })();
 
 //UI Controller (Module)
-const UICtrl = (function (itemCtrl) {
+const UICtrl = (function (itemCtrl, DATActrl) {
   const UISelectors = {
     itemList: "item-list",
     btn_add: "btn-add",
@@ -76,14 +111,21 @@ const UICtrl = (function (itemCtrl) {
 
   //Appending Event Listeners
   function loadEventListeners() {
+    //Appending event listener to "+ Add Meal" button
     document
       .getElementById(UISelectors.btn_add)
       .addEventListener("click", itemAddSubmit);
+
+    //Adding event listener to item-list
+
+    document.querySelector("body").addEventListener("click", e => {
+      if (e.target.className === "collection-item") {
+      }
+    });
   }
 
   //Function called on btn eventlistener
   function itemAddSubmit(e) {
-
     e.preventDefault();
     const input_ItemName = document.getElementById(UISelectors.input_ItemName);
     const input_ItemCalories = document.getElementById(
@@ -94,13 +136,16 @@ const UICtrl = (function (itemCtrl) {
     const Calories = input_ItemCalories.value;
 
     if (Food !== "" || Calories !== "") {
-
       populateItemList(itemCtrl.addItems(Food, Calories));
 
       input_ItemName.value = "";
       input_ItemCalories.value = "";
-
     }
+
+    //Getting Item which was last saved
+    let currentItem = itemCtrl.getCurrentItem();
+    // Saving item
+    DATActrl.setItem(currentItem);
   }
 
   //Function to how food items in UI
@@ -119,15 +164,16 @@ const UICtrl = (function (itemCtrl) {
 
     document.getElementById(UISelectors.itemList).innerHTML = innerHtml;
 
-    document.getElementById(UISelectors.span_TotalCalories).innerText = totalCalories;
-
+    document.getElementById(
+      UISelectors.span_TotalCalories
+    ).innerText = totalCalories;
   };
 
   //Function to remove update, delete and back btns
-  function rmBtns(){
-    document.getElementById(UISelectors.btn_update).style.display= "none";
-    document.getElementById(UISelectors.btn_delete).style.display= "none"
-    document.getElementById(UISelectors.btn_back).style.display= "none"
+  function rmBtns() {
+    document.getElementById(UISelectors.btn_update).style.display = "none";
+    document.getElementById(UISelectors.btn_delete).style.display = "none";
+    document.getElementById(UISelectors.btn_back).style.display = "none";
   }
 
   return {
@@ -138,9 +184,30 @@ const UICtrl = (function (itemCtrl) {
     // UISelectors: ()=> UISelectors,
 
     //Calling Event listeners
-    appendEventListeners: () => loadEventListeners()
+    appendEventListeners: () => loadEventListeners(),
+
+    //Function to set all items in storage
+    initItems: () => {
+      const storageItems = DATActrl.getItem();
+
+      if (storageItems !== null) {
+
+        let innerHtml = "";
+
+        storageItems.forEach(item => {
+          innerHtml += `<li class="collection-item" id="item-${item.id}">
+                      <strong>${item.name}: </strong><em>${item.calories}</em>
+                      <a href="" class="secondary-content">
+                          <i class="edit-item fa fa-pencil"></i>
+                      </a>
+                  </li>`;
+        });
+
+        document.getElementById(UISelectors.itemList).innerHTML = innerHtml;
+      }
+    },
   };
-})(ItemCtrl);
+})(ItemCtrl, DATActrl);
 
 //App Controller (Module)
 const App = (function (itemCtrl, uiCtrl) {
@@ -154,6 +221,8 @@ const App = (function (itemCtrl, uiCtrl) {
       uiCtrl.populateItemList(items);
 
       uiCtrl.rmvBtns();
+
+      uiCtrl.initItems();
     },
   };
 })(ItemCtrl, UICtrl);
