@@ -67,8 +67,35 @@ const ItemCtrl = (function () {
 
 //Data Controller
 const DATActrl = (function () {
+
+  // Function to fetch array of food item from storage
   function grepItem() {
     return JSON.parse(localStorage.getItem("items"));
+  }
+
+  // Function to fetch totalCalorie count from storage
+  function grepCalorieCount(){
+    let totalCalories = localStorage.getItem("calorieCount");
+
+    if(totalCalories === null){
+      
+      totalCalories = 0;
+
+
+      return totalCalories;
+
+    }
+
+    return parseInt(totalCalories);
+  }
+
+  function setCalorieCount(calories){
+    let fromLocalStorage = grepCalorieCount();
+
+    
+    fromLocalStorage += parseInt(calories);
+
+    localStorage.setItem("calorieCount", fromLocalStorage)
   }
 
   return {
@@ -93,9 +120,17 @@ const DATActrl = (function () {
     },
 
     getItem: () => grepItem(),
+
+
     clearItems: function(){
       localStorage.clear();
-    }
+    },
+
+    setTotalCalories: (calories)=> {
+      setCalorieCount(calories);
+    },
+
+    getTotalCalories: ()=> grepCalorieCount(),
   };
 })();
 
@@ -126,9 +161,14 @@ const UICtrl = (function (itemCtrl, DATActrl) {
       if (e.target.id === UISelectors.btn_clear) {
 
         e.preventDefault();
+        DATActrl.clearItems();
+        DATActrl.setTotalCalories(0);
+
         document.getElementById(UISelectors.itemList).innerHTML = "";
 
-        DATActrl.clearItems();
+        document.getElementById(UISelectors.span_TotalCalories).innerText = 0;
+
+
 
       }
     });
@@ -137,11 +177,14 @@ const UICtrl = (function (itemCtrl, DATActrl) {
   //Function called on btn eventlistener
   function itemAddSubmit(e) {
     e.preventDefault();
+
+    // Selecting textboxes
     const input_ItemName = document.getElementById(UISelectors.input_ItemName);
     const input_ItemCalories = document.getElementById(
       UISelectors.input_ItemCalories
     );
 
+    // Getting textbox values
     const Food = input_ItemName.value;
     const Calories = input_ItemCalories.value;
 
@@ -154,14 +197,25 @@ const UICtrl = (function (itemCtrl, DATActrl) {
 
     //Getting Item which was last saved
     let currentItem = itemCtrl.getCurrentItem();
+
     // Saving item
-    DATActrl.setItem(currentItem);
+    DATActrl.setItem(currentItem);   
+    
+    DATActrl.setTotalCalories(currentItem.calories)
   }
 
   //Function to how food items in UI
   let populateItemList = function (items) {
     let innerHtml = "";
     let totalCalories = itemCtrl.getTotalCalories();
+
+    document.getElementById(
+      UISelectors.span_TotalCalories
+    ).innerText = totalCalories;
+
+    // console.log(totalCalories);
+
+    let totalCalorieCount = 0;
 
     items.forEach(item => {
       innerHtml += `<li class="collection-item" id="item-${item.id}">
@@ -170,13 +224,14 @@ const UICtrl = (function (itemCtrl, DATActrl) {
                   <i class="edit-item fa fa-pencil"></i>
               </a>
           </li>`;
+
+      totalCalories += parseInt(item.calories);
     });
+
+    DATActrl.setTotalCalories(totalCalorieCount);
 
     document.getElementById(UISelectors.itemList).innerHTML = innerHtml;
 
-    document.getElementById(
-      UISelectors.span_TotalCalories
-    ).innerText = totalCalories;
   };
 
   //Function to remove update, delete and back btns
@@ -200,6 +255,10 @@ const UICtrl = (function (itemCtrl, DATActrl) {
     initItems: () => {
       const storageItems = DATActrl.getItem();
 
+      const calorieCount = DATActrl.getTotalCalories();
+
+      document.getElementById(UISelectors.span_TotalCalories).innerText = calorieCount;
+
       if (storageItems !== null) {
 
         let innerHtml = "";
@@ -215,6 +274,8 @@ const UICtrl = (function (itemCtrl, DATActrl) {
 
         document.getElementById(UISelectors.itemList).innerHTML = innerHtml;
       }
+
+
     },
   };
 })(ItemCtrl, DATActrl);
