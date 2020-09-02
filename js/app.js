@@ -93,6 +93,9 @@ const DATActrl = (function () {
     },
 
     getItem: () => grepItem(),
+    clearItems: function(){
+      localStorage.clear();
+    }
   };
 })();
 
@@ -103,6 +106,7 @@ const UICtrl = (function (itemCtrl, DATActrl) {
     btn_add: "btn-add",
     btn_update: "btn-update",
     btn_delete: "btn-delete",
+    btn_clear: "btn-clear",
     btn_back: "btn-back",
     input_ItemName: "item-name",
     input_ItemCalories: "item-calories",
@@ -119,7 +123,13 @@ const UICtrl = (function (itemCtrl, DATActrl) {
     //Adding event listener to item-list
 
     document.querySelector("body").addEventListener("click", e => {
-      if (e.target.className === "collection-item") {
+      if (e.target.id === UISelectors.btn_clear) {
+
+        e.preventDefault();
+        document.getElementById(UISelectors.itemList).innerHTML = "";
+
+        DATActrl.clearItems();
+
       }
     });
   }
