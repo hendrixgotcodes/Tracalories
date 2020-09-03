@@ -101,21 +101,54 @@ const DATActrl = (function () {
   return {
     // Returning public functions
 
-    setItem: function (item) {
+    setItem: function (name, calories) {
       let fromLocalStorage = grepItem();
 
       if (fromLocalStorage !== null) {
-        fromLocalStorage.push(item);
-        fromLocalStorage = JSON.stringify(fromLocalStorage);
 
-        localStorage.setItem("items", fromLocalStorage);
+        let ID;
+
+        if (fromLocalStorage.length > 0) {
+          ID = fromLocalStorage[fromLocalStorage.length - 1].id + 1;
+        } else {
+          ID = 0;
+        }
+  
+        let newFoodItem = {
+          id: ID,
+          name: name,
+          calories: parseInt(calories),
+        };
+  
+        fromLocalStorage.push(newFoodItem);
+
+        localStorage.setItem("items", JSON.stringify(fromLocalStorage));
+
+        return fromLocalStorage;
+
       } else if (fromLocalStorage === null) {
         fromLocalStorage = [];
-        fromLocalStorage.push(item);
 
-        fromLocalStorage = JSON.stringify(fromLocalStorage);
+        let ID;
+        
+        if (fromLocalStorage.length > 0) {
+          ID = fromLocalStorage[fromLocalStorage.length - 1].id + 1;
+        } else {
+          ID = 0;
+        }
+  
+        let newFoodItem = {
+          id: ID,
+          name: name,
+          calories: parseInt(calories),
+        };
+  
+        fromLocalStorage.push(newFoodItem);
 
-        localStorage.setItem("items", fromLocalStorage);
+
+        localStorage.setItem("items", JSON.stringify(fromLocalStorage));
+
+        return fromLocalStorage;
       }
     },
 
@@ -135,7 +168,7 @@ const DATActrl = (function () {
 })();
 
 //UI Controller (Module)
-const UICtrl = (function (itemCtrl, DATActrl) {
+const UICtrl = (function (ITEMctrl,DATActrl) {
   const UISelectors = {
     itemList: "item-list",
     btn_add: "btn-add",
@@ -189,38 +222,40 @@ const UICtrl = (function (itemCtrl, DATActrl) {
     const Calories = input_ItemCalories.value;
 
     if (Food !== "" || Calories !== "") {
-      let foodItems =itemCtrl.addItems(Food, Calories);
 
-      populateItemList(foodItems);
+      let returned = DATActrl.setItem(Food, Calories);
 
-      // Saving item
-    // DATActrl.setItem(foodItems);   
-    console.log(foodItems)
+      console.log(returned);
+
+      populateItemList(returned); 
+      
+      DATActrl.setTotalCalories(Calories);
+
+      document.getElementById(UISelectors.span_TotalCalories).innerText= DATActrl.getTotalCalories().toString();
 
       input_ItemName.value = "";
       input_ItemCalories.value = "";
     }
 
-    //Getting Item which was last saved
-    // let currentItem = itemCtrl.getCurrentItem();
 
     
     
-    // DATActrl.setTotalCalories(currentItem.calories)
   }
 
   //Function to how food items in UI
   let populateItemList = function (items) {
     let innerHtml = "";
-    let totalCalories = itemCtrl.getTotalCalories();
+    let totalCalories = DATActrl.getTotalCalories();
 
     document.getElementById(
       UISelectors.span_TotalCalories
     ).innerText = totalCalories;
 
-    // console.log(totalCalories);
+    console.log(totalCalories);
 
     let totalCalorieCount = 0;
+
+    console.log(items);
 
     items.forEach(item => {
       innerHtml += `<li class="collection-item" id="item-${item.id}">
