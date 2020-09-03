@@ -189,19 +189,24 @@ const UICtrl = (function (itemCtrl, DATActrl) {
     const Calories = input_ItemCalories.value;
 
     if (Food !== "" || Calories !== "") {
-      populateItemList(itemCtrl.addItems(Food, Calories));
+      let foodItems =itemCtrl.addItems(Food, Calories);
+
+      populateItemList(foodItems);
+
+      // Saving item
+    // DATActrl.setItem(foodItems);   
+    console.log(foodItems)
 
       input_ItemName.value = "";
       input_ItemCalories.value = "";
     }
 
     //Getting Item which was last saved
-    let currentItem = itemCtrl.getCurrentItem();
+    // let currentItem = itemCtrl.getCurrentItem();
 
-    // Saving item
-    DATActrl.setItem(currentItem);   
     
-    DATActrl.setTotalCalories(currentItem.calories)
+    
+    // DATActrl.setTotalCalories(currentItem.calories)
   }
 
   //Function to how food items in UI
