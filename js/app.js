@@ -67,36 +67,32 @@ const ItemCtrl = (function () {
 
 //Data Controller
 const DATActrl = (function () {
-
   // Function to fetch array of food item from storage
   function grepItem() {
     return JSON.parse(localStorage.getItem("items"));
   }
 
   // Function to fetch totalCalorie count from storage
-  function grepCalorieCount(){
+  function grepCalorieCount() {
     let totalCalories = localStorage.getItem("calorieCount");
 
-    if(totalCalories === null){
-      
+    if (totalCalories === null) {
       totalCalories = 0;
 
-
       return totalCalories;
-
     }
 
     return parseInt(totalCalories);
   }
 
-  function setCalorieCount(calories){
+  function setCalorieCount(calories) {
     let fromLocalStorage = grepCalorieCount();
 
-    
     fromLocalStorage += parseInt(calories);
 
-    localStorage.setItem("calorieCount", fromLocalStorage)
+    localStorage.setItem("calorieCount", fromLocalStorage);
   }
+
 
   return {
     // Returning public functions
@@ -105,7 +101,6 @@ const DATActrl = (function () {
       let fromLocalStorage = grepItem();
 
       if (fromLocalStorage !== null) {
-
         let ID;
 
         if (fromLocalStorage.length > 0) {
@@ -113,38 +108,36 @@ const DATActrl = (function () {
         } else {
           ID = 0;
         }
-  
+
         let newFoodItem = {
           id: ID,
           name: name,
           calories: parseInt(calories),
         };
-  
+
         fromLocalStorage.push(newFoodItem);
 
         localStorage.setItem("items", JSON.stringify(fromLocalStorage));
 
         return fromLocalStorage;
-
       } else if (fromLocalStorage === null) {
         fromLocalStorage = [];
 
         let ID;
-        
+
         if (fromLocalStorage.length > 0) {
           ID = fromLocalStorage[fromLocalStorage.length - 1].id + 1;
         } else {
           ID = 0;
         }
-  
+
         let newFoodItem = {
           id: ID,
           name: name,
           calories: parseInt(calories),
         };
-  
-        fromLocalStorage.push(newFoodItem);
 
+        fromLocalStorage.push(newFoodItem);
 
         localStorage.setItem("items", JSON.stringify(fromLocalStorage));
 
@@ -154,21 +147,45 @@ const DATActrl = (function () {
 
     getItem: () => grepItem(),
 
-
-    clearItems: function(){
+    clearItems: function () {
       localStorage.clear();
     },
 
-    setTotalCalories: (calories)=> {
+    setTotalCalories: calories => {
       setCalorieCount(calories);
     },
 
-    getTotalCalories: ()=> grepCalorieCount(),
+    getTotalCalories: () => grepCalorieCount(),
+
+    deleteFood: function(foodName, calories){
+
+      console.clear();
+
+      let foodList = this.getItem();
+      let totalCalories = this.getTotalCalories();
+      totalCalories = parseInt(totalCalories);
+
+
+      foodList.forEach(function(food){
+        if(food.name === foodName){
+          console.log(food.id);
+          foodList.splice(food.id, food.id);
+
+          totalCalories -= food.calories;
+        }
+      });
+
+
+      localStorage.setItem("items", JSON.stringify(foodList));
+
+      location.reload();
+
+    }
   };
 })();
 
 //UI Controller (Module)
-const UICtrl = (function (ITEMctrl,DATActrl) {
+const UICtrl = (function (ITEMctrl, DATActrl) {
   const UISelectors = {
     itemList: "item-list",
     btn_add: "btn-add",
@@ -187,9 +204,23 @@ const UICtrl = (function (ITEMctrl,DATActrl) {
     document
       .getElementById(UISelectors.btn_add)
       .addEventListener("click", itemAddSubmit);
+    
+    //Adding event listener to Update button
+    document.getElementById(UISelectors.btn_update).addEventListener("click",itemAddSubmit);
 
-    //Adding event listener to item-list
+    //Adding event listener to delete button
+    document.getElementById(UISelectors.btn_delete).addEventListener("click", (e)=>{
 
+      e.preventDefault();
+
+      let food = document.getElementById(UISelectors.input_ItemName).value;
+      let calorie = document.getElementById(UISelectors.input_ItemCalories).value;
+
+      itemDelete(food, calorie);
+      
+    });
+
+    //Ading event listeners to dynamic elements
     document.querySelector("body").addEventListener("click", e => {
       if (e.target.id === UISelectors.btn_clear) {
 
@@ -201,8 +232,41 @@ const UICtrl = (function (ITEMctrl,DATActrl) {
 
         document.getElementById(UISelectors.span_TotalCalories).innerText = 0;
 
+        document.getElementById(UISelectors.btn_update).style.display = "none";
+        document.getElementById(UISelectors.btn_delete).style.display = "none";
+        document.getElementById(UISelectors.btn_add).style.display = "inline-block";
 
+        document.getElementById(UISelectors.input_ItemCalories).value = "";
+        document.getElementById(UISelectors.input_ItemName).value = "";
 
+      } else if (e.target.classList.contains("edit-item")) {
+        //Preventing default browser actions
+        e.preventDefault();
+
+        //Gives the element focus
+        e.target.parentElement.parentElement.focus();
+
+        //Getting Food Details
+        const calories = e.target.parentElement.previousElementSibling.innerText;
+        let foodName =  e.target.parentElement.previousElementSibling.previousElementSibling.innerText;
+        foodName = foodName.replace(":","");
+        foodName = foodName.replace(" ","");
+
+        //Updating Textboxes with details
+        document.getElementById(UISelectors.input_ItemName).value = foodName;
+        document.getElementById(UISelectors.input_ItemCalories).value = calories;
+
+       
+
+        
+        document.getElementById(UISelectors.btn_update).style.display = "inline-block";
+        document.getElementById(UISelectors.btn_delete).style.display = "inline-block";
+        document.getElementById(UISelectors.btn_add).style.display = "none";
+      }
+      else if(e.target.id === "body"){
+        document.getElementById(UISelectors.btn_update).style.display = "none";
+        document.getElementById(UISelectors.btn_delete).style.display = "none";
+        document.getElementById(UISelectors.btn_add).style.display = "inline-block";
       }
     });
   }
@@ -222,24 +286,28 @@ const UICtrl = (function (ITEMctrl,DATActrl) {
     const Calories = input_ItemCalories.value;
 
     if (Food !== "" || Calories !== "") {
-
       let returned = DATActrl.setItem(Food, Calories);
 
       console.log(returned);
 
-      populateItemList(returned); 
-      
+      populateItemList(returned);
+
       DATActrl.setTotalCalories(Calories);
 
-      document.getElementById(UISelectors.span_TotalCalories).innerText= DATActrl.getTotalCalories().toString();
+      document.getElementById(
+        UISelectors.span_TotalCalories
+      ).innerText = DATActrl.getTotalCalories().toString();
 
       input_ItemName.value = "";
       input_ItemCalories.value = "";
     }
+  }
+
+  function itemDelete(foodName, calorie){  
+
+    DATActrl.deleteFood(foodName, calorie);
 
 
-    
-    
   }
 
   //Function to how food items in UI
@@ -258,7 +326,7 @@ const UICtrl = (function (ITEMctrl,DATActrl) {
     console.log(items);
 
     items.forEach(item => {
-      innerHtml += `<li class="collection-item" id="item-${item.id}">
+      innerHtml += `<li class="collection-item" tabindex="0" id="item-${item.id}">
               <strong>${item.name}: </strong><em>${item.calories}</em>
               <a href="" class="secondary-content">
                   <i class="edit-item fa fa-pencil"></i>
@@ -271,14 +339,12 @@ const UICtrl = (function (ITEMctrl,DATActrl) {
     DATActrl.setTotalCalories(totalCalorieCount);
 
     document.getElementById(UISelectors.itemList).innerHTML = innerHtml;
-
   };
 
   //Function to remove update, delete and back btns
   function rmBtns() {
     document.getElementById(UISelectors.btn_update).style.display = "none";
     document.getElementById(UISelectors.btn_delete).style.display = "none";
-    document.getElementById(UISelectors.btn_back).style.display = "none";
   }
 
   return {
@@ -297,14 +363,15 @@ const UICtrl = (function (ITEMctrl,DATActrl) {
 
       const calorieCount = DATActrl.getTotalCalories();
 
-      document.getElementById(UISelectors.span_TotalCalories).innerText = calorieCount;
+      document.getElementById(
+        UISelectors.span_TotalCalories
+      ).innerText = calorieCount;
 
       if (storageItems !== null) {
-
         let innerHtml = "";
 
         storageItems.forEach(item => {
-          innerHtml += `<li class="collection-item" id="item-${item.id}">
+          innerHtml += `<li class="collection-item" tabindex="1" id="item-${item.id}">
                       <strong>${item.name}: </strong><em>${item.calories}</em>
                       <a href="" class="secondary-content">
                           <i class="edit-item fa fa-pencil"></i>
@@ -314,8 +381,6 @@ const UICtrl = (function (ITEMctrl,DATActrl) {
 
         document.getElementById(UISelectors.itemList).innerHTML = innerHtml;
       }
-
-
     },
   };
 })(ItemCtrl, DATActrl);
