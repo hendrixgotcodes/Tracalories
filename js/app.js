@@ -165,18 +165,22 @@ const DATActrl = (function () {
       let totalCalories = this.getTotalCalories();
       totalCalories = parseInt(totalCalories);
 
+      let idModified = false;
+      while(idModified===false){
 
-      foodList.forEach(function(food){
-        if(food.name === foodName){
-          console.log(food.id);
-          foodList.splice(food.id, food.id);
+        foodList.forEach(function(food){
+          if(food.name === foodName){
+            console.log(food.id);
+            foodList.splice(food.id, food.id);
 
-          totalCalories -= food.calories;
-        }
-      });
+            totalCalories -= food.calories;
+          }
+        });
+    }
 
 
       localStorage.setItem("items", JSON.stringify(foodList));
+      localStorage.setItem("calorieCount", parseInt(totalCalories));
 
       location.reload();
 
