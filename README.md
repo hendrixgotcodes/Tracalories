@@ -1,2 +1,2 @@
 # Tracalories
-[Click here](www.google.com)
+[Click here](https://hendrixgotcodes.github.io/Tracalories/)
